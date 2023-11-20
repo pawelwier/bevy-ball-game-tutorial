@@ -14,7 +14,7 @@ fn main() {
         spawn_player, spawn_camera, spawn_enemies
     ))
     .add_systems(Update, (
-        player_movement, enemy_movement, confine_player_movement, confine_enemy_movement, update_enemy_direction
+        player_movement, enemy_movement, confine_player_movement, confine_enemy_movement, update_enemy_direction, enemy_hit_player
     ))
     .run();
 }
@@ -207,4 +207,36 @@ pub fn update_enemy_direction(
     }
 
     if is_updated { make_bump_sound(commands, asset_server); }
+}
+
+pub fn enemy_hit_player(
+    mut commands: Commands,
+    mut player_query: Query<(Entity, &Transform), With<Player>>,
+    enemy_query: Query<&Transform, With<Enemy>>,
+    asset_server: Res<AssetServer>
+) {
+    let mut is_collision = false;
+    if let Ok((player_entity, player_tranform)) = player_query.get_single_mut() {
+
+        for enemy_transform in enemy_query.iter() {
+            let distance = player_tranform.translation.distance(enemy_transform.translation);
+            let min_distance = PLAYER_SIZE / 2.0 + ENEMY_SIZE / 2.0;
+
+            is_collision = distance < min_distance;
+            if is_collision { break; }
+        }
+        if is_collision {
+            println!("Oh no! BAM!");
+            commands.entity(player_entity).despawn();
+            commands.spawn(
+                AudioBundle {
+                    source: asset_server.load("audio/explosionCrunch_000.ogg"),
+                    settings: PlaybackSettings { 
+                        mode: bevy::audio::PlaybackMode::Remove,
+                        ..default()
+                    }
+                },
+            );
+        }
+    }
 }
