@@ -1,9 +1,5 @@
 use bevy::prelude::*;
 
-
-
-
-
 pub const ENEMY_SPAWN_TIME: f32 = 3.0;
 
 #[derive(Resource)]
